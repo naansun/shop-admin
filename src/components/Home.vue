@@ -16,13 +16,14 @@
           background-color="#545c64"
           text-color="#fff"
           active-text-color="#ffd04b"
-          default-active='/users'
           router
+          unique-opened
+          default-active="1"
         >
           <el-submenu index="1">
             <template slot="title">
               <i class="el-icon-location"></i>
-              <span>导航一</span>
+              <span>用户管理</span>
             </template>
             <el-menu-item index="/users">
               <i class="el-icon-menu"></i>
@@ -32,8 +33,16 @@
           <el-submenu index="2">
             <template slot="title">
               <i class="el-icon-location"></i>
-              <span>导航二</span>
+              <span>权限管理</span>
             </template>
+            <el-menu-item index="/roles">
+              <i class="el-icon-menu"></i>
+              <span>角色列表</span>
+            </el-menu-item>
+            <el-menu-item index="/rights">
+              <i class="el-icon-menu"></i>
+              <span>权限列表</span>
+            </el-menu-item>
           </el-submenu>
         </el-menu>
       </el-aside>
@@ -47,15 +56,15 @@
 <script>
 export default {
   methods: {
-    logout() {
-      this.$confirm('您是否退出本系统', '温馨提示', {
-        type: 'warning'
-      }).then(() => {
+    async logout() {
+      try {
+        await this.$confirm('您是否退出本系统', '温馨提示', { type: 'warning' })
         localStorage.removeItem('token')
         this.$router.push('/login')
-      }).catch(() => {
+        this.$message.success('退出成功')
+      } catch (e) {
         console.log('取消了')
-      })
+      }
     }
   }
 

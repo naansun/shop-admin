@@ -46,32 +46,33 @@ export default {
       this.$refs.form.resetFields()
     },
     // 登录之前需要进行整个表单验证
-    login() {
-      this.$refs.form.validate((vali, obj) => {
-        if (!vali) { return false }
-        this.axios({
+    async login() {
+      try {
+        // 会返回一个promise对象
+        this.$refs.form.validate()
+        let res = await this.axios({
           method: 'post',
           url: 'login',
           data: this.ruleForm
-        }).then(res => {
-          console.log(res)
-          if (res.meta.status === 200) {
-            this.$message({
-              message: res.meta.msg,
-              type: 'success',
-              duration: 1000
-            })
-            localStorage.setItem('token', res.data.token)
-            this.$router.push('/home')
-          } else {
-            this.$message({
-              message: res.meta.msg,
-              type: 'error',
-              duration: 1000
-            })
-          }
         })
-      })
+        if (res.meta.status === 200) {
+          this.$message({
+            message: res.meta.msg,
+            type: 'success',
+            duration: 1000
+          })
+          localStorage.setItem('token', res.data.token)
+          this.$router.push('/home')
+        } else {
+          this.$message({
+            message: res.meta.msg,
+            type: 'error',
+            duration: 1000
+          })
+        }
+      } catch (e) {
+        return false
+      }
     }
   }
 }

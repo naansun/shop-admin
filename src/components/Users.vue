@@ -56,7 +56,7 @@
       :total="this.total"
     ></el-pagination>
     <!-- 用户添加对话框 -->
-    <el-dialog title="添加用户" :visible="showAddModal" width="40%" :before-close="handleClose">
+    <el-dialog title="添加用户" :visible.sync="showAddModal" width="40%">
       <el-form :model="userMessage" label-width="80px" ref="form" :rules="rules" status-icon>
         <el-form-item label="用户名" prop="username">
           <el-input v-model="userMessage.username"></el-input>
@@ -77,7 +77,7 @@
       </span>
     </el-dialog>
     <!-- 用户编辑对话框 -->
-    <el-dialog title="修改用户" :visible="showEditModal" width="40%" :before-close="handleClose">
+    <el-dialog title="修改用户" :visible.sync="showEditModal" width="40%">
       <el-form :model="editMessage" label-width="80px" ref="form" :rules="rules" status-icon>
         <el-form-item label="用户名">
           <el-tag type="info">{{editMessage.username}}</el-tag>
@@ -141,22 +141,25 @@ export default {
     this.getuserList()
   },
   methods: {
-    getuserList() {
-      this.axios({
-        method: 'get',
-        url: 'users',
-        params: {
-          query: this.query,
-          pagenum: this.pagenum,
-          pagesize: this.pagesize
-        }
-      }).then(res => {
+    async getuserList() {
+      try {
+        let res = await this.axios({
+          method: 'get',
+          url: 'users',
+          params: {
+            query: this.query,
+            pagenum: this.pagenum,
+            pagesize: this.pagesize
+          }
+        })
         if (res.meta.status === 200) {
           // 说明响应成功
           this.userlist = res.data.users
           this.total = res.data.total
         }
-      })
+      } catch (e) {
+        console.log('发送ajax请求失败~')
+      }
     },
     handleSizeChange(val) {
       this.pagesize = val
@@ -167,30 +170,24 @@ export default {
       this.getuserList()
     },
     // 删除功能
-    delfn(id) {
-      this.$confirm('你确定要删除吗？', '温馨提示', {
-        type: 'warning'
-      }).then(() => {
-        // 点击确定
-        this.axios({
+    async delfn(id) {
+      try {
+        await this.$confirm('你确定要删除吗？', '温馨提示', { type: 'warning' })
+        let res = await this.axios({
           method: 'delete',
           url: 'users/' + id,
-          data: {
-            id: id
-          }
-        }).then((res) => {
-          if (res.meta.status === 200) {
-            if (this.userlist.length === 1 && this.pagenum > 1) {
-              this.pagenum--
-            }
-            this.$message.success('删除成功')
-            this.getuserList()
-          }
+          data: { id: id }
         })
-      }).catch(() => {
-        // 点击取消
+        if (res.meta.status === 200) {
+          if (this.userlist.length === 1 && this.pagenum > 1) {
+            this.pagenum--
+          }
+          this.$message.success('删除成功')
+          this.getuserList()
+        }
+      } catch (e) {
         this.$message.info('取消删除')
-      })
+      }
     },
     // 查询
     selectfn() {
@@ -198,34 +195,26 @@ export default {
       this.getuserList()
     },
     // 更新状态
-    updatefn(info) {
-      console.log(info)
-      this.axios({
+    async updatefn(info) {
+      let res = await this.axios({
         method: 'put',
         url: 'users/' + info.id + '/' + 'state/' + info.mg_state
-      }).then((res) => {
-        console.log(res)
-        if (res.meta.status === 200) {
-          this.$message.success('状态修改成功了~')
-        } else {
-          this.$message.error('状态修改失败')
-        }
       })
+      if (res.meta.status === 200) {
+        this.$message.success('状态修改成功了~')
+      } else {
+        this.$message.error('状态修改失败')
+      }
     },
     // 显示对话框
     showAdd() {
       this.showAddModal = true
     },
-    handleClose() {
-      this.showAddModal = false
-      this.showEditModal = false
-    },
     // 添加功能
-    addUsers() {
+    async addUsers() {
       // 当添加时对表单进行验证
-      this.$refs.form.validate(async (valid) => {
-        if (!valid) return false
-        // 验证成功 发送ajax请求
+      try {
+        await this.$refs.form.validate()
         let res = await this.axios({
           method: 'post',
           url: 'users',
@@ -247,7 +236,9 @@ export default {
         } else {
           this.$message.error(res.meta.msg)
         }
-      })
+      } catch (e) {
+        return false
+      }
     },
     // 显示编辑对话框
     showEdit(user) {
@@ -257,26 +248,27 @@ export default {
       this.editMessage.mobile = user.mobile
       this.editMessage.id = user.id
     },
-    edit() {
-      // 表单校验
-      this.$refs.form.validate(valid => {
-        if (!valid) return false
+    async edit() {
+      try {
+        // 表单校验
+        await this.$refs.form.validate()
         // 发送ajax请求
-        this.axios({
+        let res = await this.axios({
           method: 'put',
           url: `users/${this.editMessage.id}`,
           data: this.editMessage
-        }).then(res => {
-          if (res.meta.status === 200) {
-            this.$refs.form.resetFields()
-            this.showEditModal = false
-            this.getuserList()
-            this.$message.success('修改用户信息成功')
-          } else {
-            this.$message.error(res.meta.msg)
-          }
         })
-      })
+        if (res.meta.status === 200) {
+          this.$refs.form.resetFields()
+          this.showEditModal = false
+          this.getuserList()
+          this.$message.success('修改用户信息成功')
+        } else {
+          this.$message.error(res.meta.msg)
+        }
+      } catch (e) {
+        return false
+      }
     }
   }
 }
